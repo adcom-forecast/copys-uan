@@ -548,10 +548,12 @@ function setStatus(key,status,btn){
   cell.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   if(reviews[key].status) btn.classList.add('on');
   updateCounter();
+  saveToStorage();
 }
 function setComment(key,val){
   if(!reviews[key]) reviews[key]={};
   reviews[key].comment=val;
+  saveToStorage();
 }
 function updateCounter(){
   const total = Object.values(PANELS).reduce((s,c)=>s+c.data.length,0);
@@ -638,10 +640,58 @@ function downloadCSV(){
   a.click();
 }
 
+
+/* ── PERSISTENCIA localStorage ── */
+const STORAGE_KEY = 'uan_copys_reviews_v1';
+
+
+/* autosave toast */
+let _saveTimer;
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(reviews));
+    clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(showSaveToast, 300);
+  } catch(e) {}
+}
+function showSaveToast(){
+  let t = document.getElementById('_save_toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id='_save_toast';
+    t.style.cssText='position:fixed;bottom:18px;right:18px;background:#1E7A4A;color:#fff;padding:7px 15px;border-radius:8px;font-family:Montserrat,sans-serif;font-size:0.73rem;font-weight:600;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.15);transition:opacity 0.4s;';
+    document.body.appendChild(t);
+  }
+  t.textContent='✓ Guardado automáticamente';
+  t.style.opacity='1';
+  clearTimeout(t._hide);
+  t._hide = setTimeout(()=>{ t.style.opacity='0'; }, 1800);
+}
+
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      Object.assign(reviews, saved);
+    }
+  } catch(e) {}
+}
+
 /* ── INIT ── */
+loadFromStorage();
 buildFilters('google');
 renderPanel('google');
 updateCounter();
+// Show autosave indicator if previous session found
+if(Object.keys(reviews).length > 0){
+  const ind = document.createElement('div');
+  ind.style.cssText='position:fixed;bottom:18px;right:18px;background:#003087;color:#fff;padding:8px 16px;border-radius:8px;font-family:Montserrat,sans-serif;font-size:0.75rem;font-weight:600;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+  ind.textContent='✓ Progreso restaurado';
+  document.body.appendChild(ind);
+  setTimeout(()=>ind.remove(), 3000);
+}
 </script>
 </body>
 </html>
