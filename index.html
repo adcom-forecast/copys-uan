@@ -621,7 +621,16 @@ function openModal(){
 function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
 
 function downloadCSV(){
-  let rows=[['Canal','Programa','Facultad','Sede','Metodología','Estado','Comentario']];
+  function getCopyLines(pid, row) {
+    if (pid === 'google') {
+      const h = (row.headlines || []).map(l => l.trim()).filter(Boolean);
+      const d = (row.descriptions || []).map(l => l.trim()).filter(Boolean);
+      return [...h, ...d].join(' | ');
+    }
+    return (row.options || []).map((o, i) => 'Op' + (i+1) + ': ' + o.trim()).join(' | ');
+  }
+
+  let rows=[['Canal','Programa','Facultad','Sede','Metodología','Estado','Comentario','Copy']];
   Object.entries(PANELS).forEach(([pid,cfg])=>{
     cfg.data.forEach((row,i)=>{
       const r=reviews[`${pid}::${i}`]||{};
@@ -633,7 +642,8 @@ function downloadCSV(){
         row.sede||row.ciudad||'',
         row.metodologia||'',
         r.status==='approved'?'Aprobado':r.status==='rejected'?'Rechazado':'Sin estado',
-        r.comment||''
+        r.comment||'',
+        getCopyLines(pid, row)
       ]);
     });
   });
@@ -643,7 +653,6 @@ function downloadCSV(){
   a.download='UAN_Revision_Copys_'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();
 }
-
 
 /* ── PERSISTENCIA localStorage ── */
 const STORAGE_KEY = 'uan_copys_reviews_v1';
